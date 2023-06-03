@@ -1,6 +1,6 @@
 const userModel = require("../models/userSchema");
 const bcrypt = require("bcrypt-inzi");
-const jwt = require('../middlewares/jwtMiddleware');
+const jwt = require("../middlewares/jwtMiddleware");
 
 exports.createUser = async (req, res) => {
   try {
@@ -45,21 +45,27 @@ exports.createUser = async (req, res) => {
 exports.login = async (req, res) => {
   try {
     const { email, password } = req.body;
-    // find user 
-    const user = await userModel.findOne({email});
+    // find user
+    const user = await userModel.findOne({ email });
     // Verify Password
-    const verifyHash = await bcrypt.varifyHash(password,user.password);
-    if(!verifyHash){
-        res.status(400).json({ message: "Crendentials error" });
-        return;
+    const verifyHash = await bcrypt.varifyHash(password, user.password);
+    if (!verifyHash) {
+      res.status(400).json({ message: "Crendentials error" });
+      return;
     }
-    // User get
-    res.status(200).json({
+    if (verifyHash) {
+      const tokenObj = {
+        ...user,
+      };
+      const token = await jwt.sign(tokenObj);
+      // User get
+      res.status(200).json({
         message: "User find succesfully !!..",
         data: user,
+        token,
         status: true,
       });
-
+    }
   } catch (err) {
     console.log(err);
     res.status(500).json({
@@ -68,4 +74,53 @@ exports.login = async (req, res) => {
   }
 };
 
+exports.getAllUser = async (req, res) => {
+  try {
+    const user = await userModel.find();
+    res.status(200).json({
+      message: "Users retrieved succesfully !!..",
+      data: user,
+      status: true,
+    });
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({
+      message: "Something went wrong !!..",
+    });
+  }
+};
 
+exports.getUser = async (req, res) => {
+  try {
+    const {id} = req.params;
+    const user = await userModel.find({_id:id});
+    res.status(200).json({
+      message: "User retrieved succesfully !!..",
+      data: user,
+      status: true,
+    });
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({
+      message: "Something went wrong !!..",
+    });
+  }
+};
+
+exports.updateUser = async (req, res) => {
+  try {
+    const {id} = req.params;
+    const {name} = req.body;
+    const user = await userModel.findByIdAndUpdate(id,{name},{new:true});
+    res.status(200).json({
+      message: "User updated succesfully !!..",
+      data: user,
+      status: true,
+    });
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({
+      message: "Something went wrong !!..",
+    });
+  }
+};
