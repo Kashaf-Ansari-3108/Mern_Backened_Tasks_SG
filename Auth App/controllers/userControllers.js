@@ -110,8 +110,16 @@ exports.getUser = async (req, res) => {
 exports.updateUser = async (req, res) => {
   try {
     const {id} = req.params;
-    const {name} = req.body;
-    const user = await userModel.findByIdAndUpdate(id,{name},{new:true});
+    const {name,password} = req.body;
+    // If fields are missing
+    if (!name || !password) {
+      res.status(400).json({ message: "Required fields are missing" });
+      return;
+    }
+    // hash password
+    const hashpwd = await bcrypt.stringToHash(password, 10);
+    //update User
+    const user = await userModel.findByIdAndUpdate(id,{name,password:hashpwd},{new:true});
     res.status(200).json({
       message: "User updated succesfully !!..",
       data: user,
